@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radio Calico - High Quality Live Stream</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <img src="/static/RadioCalicoLogoTM.png" alt="Radio Calico Logo" class="logo-img">
+            <div class="logo-text">
+                <span class="logo-radio">Radio</span> <span class="logo-calico">Calico</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Player Section -->
+        <div class="player-section">
+            <!-- Album Art -->
+            <div class="album-art-container">
+                <img id="albumArt" class="album-art" src="https://d3d4yli4hf5bmh.cloudfront.net/cover.jpg" alt="Album Art">
+            </div>
+
+            <!-- Track Info & Controls -->
+            <div class="track-info">
+                <h1 class="artist-name" id="artistName">Loading...</h1>
+                <h2 class="song-title" id="songTitle">Loading track info...</h2>
+                <p class="album-info" id="albumInfo">Album information loading...</p>
+                <p class="year-info" id="yearInfo"></p>
+                <p class="audio-quality" id="audioQuality">High Quality Audio</p>
+
+                <!-- Rating -->
+                <div class="rating-container">
+                    <button class="rating-btn" id="thumbsUpBtn">
+                        <span class="rating-icon">👍</span>
+                        <span id="thumbsUpCount">0</span>
+                    </button>
+                    <button class="rating-btn" id="thumbsDownBtn">
+                        <span class="rating-icon">👎</span>
+                        <span id="thumbsDownCount">0</span>
+                    </button>
+                </div>
+                <div class="rating-message" id="ratingMessage"></div>
+
+                <!-- Player Controls -->
+                <div class="player-controls">
+                    <button class="play-button" id="playButton" title="Play/Pause">
+                        ▶
+                    </button>
+                    <div class="volume-control">
+                        <span class="volume-icon">🔊</span>
+                        <input type="range" min="0" max="100" value="70" class="volume-slider" id="volumeSlider">
+                        <span class="volume-value" id="volumeValue">70%</span>
+                    </div>
+                </div>
+
+                <div class="status-message" id="status">Ready to Play</div>
+                <div class="loading" id="loading"></div>
+                <div class="metadata-status" id="metadataStatus">Metadata: Connecting...</div>
+            </div>
+        </div>
+
+        <!-- Previous Tracks -->
+        <div class="previous-tracks">
+            <h3 class="section-title">Previous tracks:</h3>
+            <ul class="track-list" id="trackList">
+                <li class="track-item">
+                    <div class="track-name">Loading...</div>
+                    <div class="track-artist">Please wait</div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="error-message" id="error"></div>
+    </div>
+
+    <audio id="audio" preload="none"></audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
