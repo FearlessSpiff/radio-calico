@@ -66,7 +66,7 @@ function updateNowPlaying(data) {
     // Store current song info for ratings
     currentArtist = data.artist || 'Unknown Artist';
     currentTitle = data.title || 'Unknown Title';
-    currentSongId = btoa(currentArtist + '::' + currentTitle);
+    currentSongId = btoa(unescape(encodeURIComponent(currentArtist + '::' + currentTitle)));
 
     // Update display
     artistName.textContent = currentArtist;
