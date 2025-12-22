@@ -29,17 +29,17 @@ docker compose down
 
 #### Production Mode
 ```bash
-# Build and run the production container
+# Build and run the production containers
 docker compose -f docker-compose.prod.yml up -d
 
 # View logs
 docker compose -f docker-compose.prod.yml logs -f
 
-# Stop the container
+# Stop the containers
 docker compose -f docker-compose.prod.yml down
 ```
 
-The application will be available at `http://localhost:5000`
+The application will be available at `http://localhost` (port 80 via nginx)
 
 **Development features**:
 - Hot reload on code changes
@@ -47,11 +47,14 @@ The application will be available at `http://localhost:5000`
 - Source code mounted as volumes
 
 **Production features**:
+- PostgreSQL database for scalability and reliability
+- Nginx reverse proxy with caching and security headers
 - Gunicorn WSGI server with 4 workers
-- Health checks
+- Health checks for all services
 - Resource limits (512MB memory, 1 CPU)
 - Non-root user for security
 - No source code mounting
+- Automatic database initialization
 
 ### Option 2: Local Python Environment
 
@@ -75,12 +78,14 @@ http://localhost:5000
 ```
 .
 ├── app.py                    # Main Flask application (routes, database, API)
-├── ratings.db                # SQLite database for song ratings
+├── ratings.db                # SQLite database (development only)
 ├── .env                      # Environment variables
 ├── requirements.txt          # Python dependencies
 ├── Dockerfile                # Multi-stage Docker build (dev & prod)
 ├── docker-compose.yml        # Docker Compose for development
-├── docker-compose.prod.yml   # Docker Compose for production
+├── docker-compose.prod.yml   # Docker Compose for production (PostgreSQL + nginx)
+├── nginx.conf                # Nginx reverse proxy configuration
+├── entrypoint-prod.sh        # Production entrypoint script (DB init)
 ├── .dockerignore             # Docker build exclusions
 ├── templates/                # HTML templates
 │   └── radio.html            # Main radio player interface (HTML only)
@@ -95,8 +100,11 @@ http://localhost:5000
 
 ### Backend
 - **Framework**: Flask
-- **Database**: SQLite with raw SQL (no ORM)
+- **Database**:
+  - Development: SQLite with raw SQL
+  - Production: PostgreSQL 16 with raw SQL
 - **User Identification**: Anonymous fingerprinting based on IP + User-Agent hash
+- **Deployment**: Docker containers with multi-stage builds
 
 ### Frontend
 - **Player**: HLS.js for adaptive streaming
@@ -152,12 +160,32 @@ deactivate
 ### Docker Configuration
 
 The application uses a multi-stage Dockerfile with two build targets:
-- **development**: Flask dev server with hot reload and debug mode
-- **production**: Gunicorn server with 4 workers, health checks, and security hardening
+- **development**: Flask dev server with hot reload and debug mode, SQLite database
+- **production**: Gunicorn + PostgreSQL + nginx with health checks and security hardening
+
+**Production architecture** (3-tier setup):
+- **nginx**: Reverse proxy on port 80 with gzip compression and security headers
+- **radiocalico**: Flask application with Gunicorn (4 workers, 2 threads) on port 5000
+- **postgres**: PostgreSQL 16 Alpine database with persistent storage
+
+**Key production features**:
+- Nginx proxies all requests (including static files) to Gunicorn
+- PostgreSQL database replaces SQLite for better scalability
+- Automatic database initialization on container startup
+- Health checks for all three services
+- Resource limits on application container
 
 Database persistence is handled through Docker volumes:
-- `radiocalico-dev-data`: Development database
-- `radiocalico-prod-data`: Production database
+- `radiocalico-dev-data`: Development SQLite database
+- `radiocalico-postgres-data`: Production PostgreSQL data
+
+**Environment variables for production**:
+- `DATABASE_URL`: PostgreSQL connection string (auto-configured in docker-compose.prod.yml)
+- `POSTGRES_PASSWORD`: **IMPORTANT**: Change the default password in docker-compose.prod.yml before deploying to production
+
+**Firewall/Network Requirements**:
+- If using nftables, ensure Docker bridge interfaces (`br-*`) are allowed in the forward chain
+- Containers need outbound internet access to fetch metadata from CloudFront
 
 ## Stream Information
 
@@ -165,3 +193,36 @@ The application streams from a CloudFront CDN:
 - **Audio Stream**: HLS format (.m3u8)
 - **Metadata**: JSON format with current and previous track information
 - **Album Art**: JPEG images updated per track
+
+## Troubleshooting
+
+### Metadata not loading or ratings not working (Production)
+
+If metadata fails to load or song ratings don't work in production, Docker containers likely can't access the internet.
+
+**Symptoms**:
+- Metadata shows "Error - Retrying..."
+- Rating buttons don't respond
+- Logs show "Network is unreachable" errors
+
+**Solution for nftables**:
+
+Edit `/etc/nftables.conf` and ensure the forward chain allows Docker bridge interfaces:
+
+```nft
+chain forward {
+  type filter hook forward priority filter; policy drop;
+  iifname "docker0" accept comment "allow docker0 outbound"
+  oifname "docker0" ct state related,established accept comment "allow docker0 inbound"
+  iifname "br-*" accept comment "allow docker bridge outbound"
+  oifname "br-*" ct state related,established accept comment "allow docker bridge inbound"
+}
+```
+
+Then reload nftables and restart containers:
+```bash
+sudo systemctl reload nftables
+docker compose -f docker-compose.prod.yml restart
+```
+
+**Solution for iptables/firewalld**: Ensure Docker's MASQUERADE rules are present and firewall allows Docker traffic.

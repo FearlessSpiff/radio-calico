@@ -70,9 +70,11 @@ The application supports two deployment modes:
 
 #### Docker (Multi-stage Build)
 - **Dockerfile**: Contains two build targets (`development` and `production`)
-- **docker-compose.yml**: Development configuration with volume mounts for hot reload
-- **docker-compose.prod.yml**: Production configuration with Gunicorn and health checks
-- **Database volumes**: Separate volumes for dev (`radiocalico-dev-data`) and prod (`radiocalico-prod-data`)
+- **docker-compose.yml**: Development configuration with SQLite, volume mounts for hot reload
+- **docker-compose.prod.yml**: Production with PostgreSQL, nginx, and Gunicorn
+- **nginx.conf**: Nginx reverse proxy configuration (proxies all requests to Gunicorn)
+- **entrypoint-prod.sh**: Production startup script (waits for PostgreSQL, initializes DB, starts Gunicorn)
+- **Database volumes**: Separate volumes for dev (`radiocalico-dev-data`) and prod (`radiocalico-postgres-data`)
 
 **Development container features**:
 - Flask development server
@@ -81,17 +83,34 @@ The application supports two deployment modes:
 - Source code mounted as volumes
 
 **Production container features**:
-- Gunicorn WSGI server (4 workers, 2 threads)
-- Non-root user (`appuser`) for security
-- Health checks with 30s interval
-- Resource limits (512MB memory, 1 CPU)
-- No source code mounting
+- Three-tier architecture: nginx → Gunicorn → PostgreSQL
+- **nginx**: Reverse proxy on port 80 with gzip compression and security headers
+  - Proxies all requests (including static files) to Gunicorn
+  - Health check endpoint at `/health`
+- **radiocalico (app)**: Gunicorn WSGI server (4 workers, 2 threads) on port 5000
+  - Non-root user (`appuser`) for security
+  - Resource limits (512MB memory, 1 CPU)
+  - Automatic database initialization via entrypoint script
+  - Health checks via HTTP request to port 5000
+- **postgres**: PostgreSQL 16 Alpine database
+  - Persistent volume for data storage
+  - Health checks via `pg_isready`
+- No source code mounting (production uses baked-in code)
+
+**Important production notes**:
+- Change default PostgreSQL password in `docker-compose.prod.yml`
+- Ensure Docker bridge interfaces (`br-*`) are allowed in firewall (nftables/iptables)
+- Containers require outbound internet access for metadata API
 
 ### Backend (Flask)
 - **app.py**: Main Flask application containing all routes and database logic
-- **Database**: SQLite (`ratings.db`) with a single `ratings` table
+- **Database**:
+  - Development: SQLite (`ratings.db`) with a single `ratings` table
+  - Production: PostgreSQL with a single `ratings` table
+  - Automatic detection via `DATABASE_URL` environment variable
+  - Uses raw SQL (no ORM) with parameterized queries
 - **User identification**: Uses SHA-256 hash of IP + User-Agent as fingerprint (stored in `user_fingerprint` field)
-- **No separate models.py or config.py**: All code is in app.py despite what README.md mentions
+- **No separate models.py or config.py**: All code is in app.py
 
 ### API Endpoints
 - `GET /`: Serves the main radio player (radio.html)
@@ -109,6 +128,8 @@ The application supports two deployment modes:
 - **Rating system**: Thumbs up/down buttons that submit ratings to the backend API
 
 ### Database Schema
+
+**Development (SQLite)**:
 ```sql
 CREATE TABLE ratings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,6 +140,20 @@ CREATE TABLE ratings (
     rating INTEGER NOT NULL,            -- 1 (thumbs up) or -1 (thumbs down)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(song_id, user_fingerprint)   -- One rating per user per song
+)
+```
+
+**Production (PostgreSQL)**:
+```sql
+CREATE TABLE ratings (
+    id SERIAL PRIMARY KEY,              -- PostgreSQL auto-increment
+    song_id TEXT NOT NULL,
+    artist TEXT NOT NULL,
+    title TEXT NOT NULL,
+    user_fingerprint TEXT NOT NULL,
+    rating INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(song_id, user_fingerprint)
 )
 ```
 

@@ -1,19 +1,36 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: radiocalico-postgres
+    environment:
+      - POSTGRES_DB=radiocalico
+      - POSTGRES_USER=radiocalico
+      - POSTGRES_PASSWORD=radiocalico_prod_password_change_me
+    volumes:
+      - radiocalico-postgres-data:/var/lib/postgresql/data
+    networks:
+      - radiocalico-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radiocalico"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   radiocalico:
     build:
       context: .
       dockerfile: Dockerfile
       target: production
     container_name: radiocalico-prod
-    ports:
-      - "5000:5000"
-    volumes:
-      # Persistent volume for database only (no source code mounting)
-      - radiocalico-prod-data:/app/instance
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=production
       - FLASK_DEBUG=0
+      - DATABASE_URL=postgresql://radiocalico:radiocalico_prod_password_change_me@postgres:5432/radiocalico
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: always
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000', timeout=2)"]
@@ -32,8 +49,27 @@ services:
           cpus: '0.5'
           memory: 256M
 
+  nginx:
+    image: nginx:alpine
+    container_name: radiocalico-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      radiocalico:
+        condition: service_healthy
+    restart: always
+    networks:
+      - radiocalico-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
-  radiocalico-prod-data:
+  radiocalico-postgres-data:
     driver: local
 
 networks:
