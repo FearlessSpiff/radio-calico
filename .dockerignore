@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation & Design
+*.md
+*.txt
+!requirements.txt
+*.zip
+*.png
+!static/*.png
+RadioCalicoLayout.png
+RadioCalicoLogoTM.png
+RadioCalico_Style_Guide.txt
+RadioCalicoStyle.zip
+stream_URL.txt
+
+# Database (will be created in volume)
+*.db
+instance/
+
+# Environment
+.env
+
+# Claude
+.claude/

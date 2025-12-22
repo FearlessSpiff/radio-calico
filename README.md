@@ -13,6 +13,48 @@ A web-based live radio streaming application featuring high-quality audio playba
 
 ## Running the Application
 
+### Option 1: Docker (Recommended)
+
+#### Development Mode
+```bash
+# Build and run the development container
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop the container
+docker compose down
+```
+
+#### Production Mode
+```bash
+# Build and run the production container
+docker compose -f docker-compose.prod.yml up -d
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# Stop the container
+docker compose -f docker-compose.prod.yml down
+```
+
+The application will be available at `http://localhost:5000`
+
+**Development features**:
+- Hot reload on code changes
+- Flask debug mode enabled
+- Source code mounted as volumes
+
+**Production features**:
+- Gunicorn WSGI server with 4 workers
+- Health checks
+- Resource limits (512MB memory, 1 CPU)
+- Non-root user for security
+- No source code mounting
+
+### Option 2: Local Python Environment
+
 1. Activate the virtual environment:
 ```bash
 source venv/bin/activate
@@ -32,17 +74,21 @@ http://localhost:5000
 
 ```
 .
-├── app.py              # Main Flask application (routes, database, API)
-├── ratings.db          # SQLite database for song ratings
-├── .env               # Environment variables
-├── requirements.txt   # Python dependencies
-├── templates/         # HTML templates
-│   └── radio.html     # Main radio player interface (HTML only)
-├── static/           # Static assets
-│   ├── style.css      # All CSS styles
-│   ├── script.js      # All JavaScript code
-│   └── RadioCalicoLogoTM.png
-└── venv/            # Virtual environment
+├── app.py                    # Main Flask application (routes, database, API)
+├── ratings.db                # SQLite database for song ratings
+├── .env                      # Environment variables
+├── requirements.txt          # Python dependencies
+├── Dockerfile                # Multi-stage Docker build (dev & prod)
+├── docker-compose.yml        # Docker Compose for development
+├── docker-compose.prod.yml   # Docker Compose for production
+├── .dockerignore             # Docker build exclusions
+├── templates/                # HTML templates
+│   └── radio.html            # Main radio player interface (HTML only)
+├── static/                   # Static assets
+│   ├── style.css             # All CSS styles
+│   ├── script.js             # All JavaScript code
+│   └── RadioCalicoLogoTM.png # Logo
+└── venv/                     # Virtual environment (local dev only)
 ```
 
 ## Technical Details
@@ -74,6 +120,24 @@ The `ratings` table stores user ratings with these fields:
 
 ## Development
 
+### Using Docker
+
+To rebuild after changing dependencies:
+```bash
+# Development
+docker compose build
+
+# Production
+docker compose -f docker-compose.prod.yml build
+```
+
+To access the container shell:
+```bash
+docker exec -it radiocalico-dev /bin/bash
+```
+
+### Using Local Python Environment
+
 To install additional packages:
 ```bash
 venv/bin/pip install package-name
@@ -84,6 +148,16 @@ To deactivate the virtual environment:
 ```bash
 deactivate
 ```
+
+### Docker Configuration
+
+The application uses a multi-stage Dockerfile with two build targets:
+- **development**: Flask dev server with hot reload and debug mode
+- **production**: Gunicorn server with 4 workers, health checks, and security hardening
+
+Database persistence is handled through Docker volumes:
+- `radiocalico-dev-data`: Development database
+- `radiocalico-prod-data`: Production database
 
 ## Stream Information
 

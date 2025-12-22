@@ -1,0 +1,31 @@
+services:
+  radiocalico-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: radiocalico-dev
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount source code for live reload during development
+      - ./app.py:/app/app.py
+      - ./templates:/app/templates
+      - ./static:/app/static
+      # Persistent volume for database
+      - radiocalico-dev-data:/app/instance
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    restart: unless-stopped
+    networks:
+      - radiocalico-network
+
+volumes:
+  radiocalico-dev-data:
+    driver: local
+
+networks:
+  radiocalico-network:
+    driver: bridge
