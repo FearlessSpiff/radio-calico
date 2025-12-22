@@ -45,6 +45,10 @@ FROM base as production
 # Install production WSGI server
 RUN pip install --no-cache-dir gunicorn
 
+# Copy entrypoint script
+COPY entrypoint-prod.sh /entrypoint-prod.sh
+RUN chmod 755 /entrypoint-prod.sh
+
 # Set Flask environment for production
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
@@ -52,7 +56,8 @@ ENV FLASK_DEBUG=0
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chown appuser:appuser /entrypoint-prod.sh
 
 # Switch to non-root user
 USER appuser
@@ -60,5 +65,5 @@ USER appuser
 # Expose port
 EXPOSE 5000
 
-# Use Gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "app:app"]
+# Use entrypoint script to initialize database and start Gunicorn
+CMD ["/entrypoint-prod.sh"]
