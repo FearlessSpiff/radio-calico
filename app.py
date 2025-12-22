@@ -2,13 +2,20 @@ from flask import Flask, render_template, jsonify, request
 import requests
 import sqlite3
 import hashlib
+import os
 from datetime import datetime
 
 app = Flask(__name__)
 
+# Database path configuration
+DB_PATH = os.path.join('instance', 'ratings.db')
+
+# Ensure instance directory exists
+os.makedirs('instance', exist_ok=True)
+
 # Database initialization
 def init_db():
-    conn = sqlite3.connect('ratings.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS ratings (
@@ -49,7 +56,7 @@ def get_metadata():
 def get_ratings(song_id):
     """Get rating counts for a song"""
     try:
-        conn = sqlite3.connect('ratings.db')
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
 
         # Get thumbs up count
@@ -91,7 +98,7 @@ def rate_song():
 
         user_fp = get_user_fingerprint()
 
-        conn = sqlite3.connect('ratings.db')
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
 
         # Check if user has already rated this song
@@ -131,6 +138,9 @@ def rate_song():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-if __name__ == '__main__':
+# Initialize database when app starts (works with both Flask dev server and Gunicorn)
+with app.app_context():
     init_db()
+
+if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

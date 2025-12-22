@@ -13,6 +13,22 @@ Radio Calico is a web-based radio streaming application that plays high-quality 
 ## Development Commands
 
 ### Running the application
+
+#### Docker (Recommended)
+```bash
+# Development mode (hot reload, debug enabled)
+docker compose up -d
+docker compose logs -f
+
+# Production mode (Gunicorn, health checks)
+docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml logs -f
+
+# Stop containers
+docker compose down
+```
+
+#### Local Python Environment
 ```bash
 # Activate virtual environment
 source venv/bin/activate
@@ -29,9 +45,47 @@ venv/bin/pip install package-name
 
 # Update requirements.txt after installing packages
 venv/bin/pip freeze > requirements.txt
+
+# If using Docker, rebuild after dependency changes
+docker compose build
+```
+
+### Docker commands
+```bash
+# Rebuild containers
+docker compose build
+docker compose -f docker-compose.prod.yml build
+
+# Access container shell
+docker exec -it radiocalico-dev /bin/bash
+
+# View container logs
+docker compose logs -f radiocalico-dev
 ```
 
 ## Architecture
+
+### Deployment
+The application supports two deployment modes:
+
+#### Docker (Multi-stage Build)
+- **Dockerfile**: Contains two build targets (`development` and `production`)
+- **docker-compose.yml**: Development configuration with volume mounts for hot reload
+- **docker-compose.prod.yml**: Production configuration with Gunicorn and health checks
+- **Database volumes**: Separate volumes for dev (`radiocalico-dev-data`) and prod (`radiocalico-prod-data`)
+
+**Development container features**:
+- Flask development server
+- Hot reload on code changes
+- Debug mode enabled
+- Source code mounted as volumes
+
+**Production container features**:
+- Gunicorn WSGI server (4 workers, 2 threads)
+- Non-root user (`appuser`) for security
+- Health checks with 30s interval
+- Resource limits (512MB memory, 1 CPU)
+- No source code mounting
 
 ### Backend (Flask)
 - **app.py**: Main Flask application containing all routes and database logic
