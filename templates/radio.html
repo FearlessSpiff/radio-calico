@@ -6,8 +6,8 @@
     <title>Radio Calico - High Quality Live Stream</title>
 
     <!-- Preload critical assets -->
-    <link rel="preload" href="/static/style.min.css" as="style">
-    <link rel="preload" href="/static/RadioCalicoLogoTM-50.webp" as="image" type="image/webp">
+    <link rel="preload" href="/static/style.min.css?v={{ build_version }}" as="style">
+    <link rel="preload" href="/static/RadioCalicoLogoTM-50.webp?v={{ build_version }}" as="image" type="image/webp">
 
     <!-- DNS prefetch and preconnect for external resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +19,7 @@
     <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"></noscript>
 
     <!-- Critical CSS -->
-    <link rel="stylesheet" href="/static/style.min.css">
+    <link rel="stylesheet" href="/static/style.min.css?v={{ build_version }}">
 </head>
 <body>
     <!-- Header -->
@@ -27,9 +27,9 @@
         <div class="header-content">
             <picture>
                 <source type="image/webp"
-                        srcset="/static/RadioCalicoLogoTM-50.webp 1x, /static/RadioCalicoLogoTM-100.webp 2x">
-                <img src="/static/RadioCalicoLogoTM-50.png"
-                     srcset="/static/RadioCalicoLogoTM-50.png 1x, /static/RadioCalicoLogoTM-100.png 2x"
+                        srcset="/static/RadioCalicoLogoTM-50.webp?v={{ build_version }} 1x, /static/RadioCalicoLogoTM-100.webp?v={{ build_version }} 2x">
+                <img src="/static/RadioCalicoLogoTM-50.png?v={{ build_version }}"
+                     srcset="/static/RadioCalicoLogoTM-50.png?v={{ build_version }} 1x, /static/RadioCalicoLogoTM-100.png?v={{ build_version }} 2x"
                      alt="Radio Calico Logo"
                      class="logo-img"
                      width="50"
@@ -105,6 +105,6 @@
 
     <audio id="audio" preload="none"></audio>
 
-    <script defer src="/static/script.min.js"></script>
+    <script defer src="/static/script.min.js?v={{ build_version }}"></script>
 </body>
 </html>

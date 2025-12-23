@@ -17,6 +17,7 @@ let currentArtist = null;
 let currentTitle = null;
 let hlsLoaded = false;
 let hlsLoading = false;
+let playerInitialized = false;
 
 // Set initial volume
 audio.volume = 0.7;
@@ -253,11 +254,13 @@ async function initPlayer() {
 // Play/Pause functionality
 playButton.addEventListener('click', async function() {
     // Initialize player on first play if not already initialized
-    if (!hls && !hlsLoaded && !hlsLoading) {
+    if (!playerInitialized && !hls) {
+        playerInitialized = true;
         try {
             await initPlayer();
         } catch (err) {
             console.error('Failed to initialize player:', err);
+            playerInitialized = false;
             return;
         }
     }
