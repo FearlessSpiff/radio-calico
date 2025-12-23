@@ -162,6 +162,113 @@ To deactivate the virtual environment:
 deactivate
 ```
 
+## Testing
+
+The project includes comprehensive automated tests for both backend (Python) and frontend (JavaScript) code.
+
+### Running All Tests
+
+Using Make (recommended):
+```bash
+# Run all tests (Python + Frontend)
+make test
+
+# Run tests with coverage reports
+make test-coverage
+
+# Run tests and security scans together
+make test-all
+```
+
+### Running Tests by Type
+
+Run Python tests only:
+```bash
+make test-python
+
+# Or manually with pytest
+pytest tests/ -v
+```
+
+Run frontend tests only:
+```bash
+make test-frontend
+
+# Or manually with npm
+npm test
+
+# Run in watch mode for development
+npm run test:watch
+```
+
+### Test Coverage
+
+Generate coverage reports:
+```bash
+# Python coverage (generates HTML and terminal reports)
+pytest tests/ -v --cov=app --cov-report=html --cov-report=term
+
+# Frontend coverage
+npm run test:coverage
+```
+
+Coverage reports are saved to:
+- **Python**: `htmlcov/` directory (open `htmlcov/index.html` in browser)
+- **Frontend**: `coverage/` directory (open `coverage/lcov-report/index.html` in browser)
+
+### Test Structure
+
+**Backend Tests** (`tests/test_app.py`):
+- Flask route endpoints (/, /api/metadata, /api/ratings, /api/rate)
+- Rating system CRUD operations (create, update, delete)
+- Database operations and unique constraints
+- Cache-Control headers validation
+- User fingerprinting functionality
+- Error handling and input validation
+
+**Frontend Tests** (`tests/test_frontend.test.js`):
+- Player initialization and DOM elements
+- HLS.js integration and mocking
+- Volume controls and UI interactions
+- Metadata display elements
+- Rating system buttons and counters
+- Status and error handling elements
+
+### Automated Testing (GitHub Actions)
+
+Tests run automatically via GitHub Actions:
+- **On every push** to master/main branch
+- **On every pull request** to master/main branch
+- **Manually** via workflow dispatch
+
+**Features:**
+- Parallel execution of Python and frontend tests
+- Coverage reports for both test suites
+- Automatic PR comments with test results and coverage percentages
+- Artifact uploads for detailed coverage reports (30-day retention)
+- Job summaries in GitHub Actions UI
+
+**Workflow outputs:**
+- `python-coverage-html/` - Python coverage HTML report
+- `python-coverage-xml/coverage.xml` - Python coverage XML
+- `frontend-coverage/` - Frontend coverage report
+
+**View results:**
+- Check the "Tests" workflow in the Actions tab
+- Review PR comments for test coverage percentages
+- Download detailed coverage reports from workflow artifacts
+
+### Testing Tools
+
+**Python:**
+- **pytest**: Testing framework for Python code
+- **pytest-cov**: Coverage plugin for pytest
+- **pytest-mock**: Mocking library for pytest
+
+**JavaScript:**
+- **Jest**: Testing framework for JavaScript code
+- **jest-environment-jsdom**: DOM simulation for browser testing
+
 ## Security Scanning
 
 The project includes comprehensive security scanning for both Python and JavaScript dependencies.

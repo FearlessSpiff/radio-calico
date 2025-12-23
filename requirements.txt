@@ -17,3 +17,8 @@ Werkzeug==3.1.4
 pip-audit==2.7.3
 safety==3.2.11
 bandit==1.8.0
+
+# Testing tools
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-mock==3.14.0

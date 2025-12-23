@@ -1,0 +1,195 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+    # Allow manual triggering
+
+jobs:
+  python-tests:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Python tests with coverage
+        run: |
+          pytest tests/ -v --cov=app --cov-report=term --cov-report=html --cov-report=xml
+
+      - name: Upload Python coverage report (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage-html
+          path: htmlcov/
+          retention-days: 30
+
+      - name: Upload Python coverage report (XML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-coverage-xml
+          path: coverage.xml
+          retention-days: 30
+
+      - name: Extract coverage percentage
+        id: coverage
+        if: always()
+        run: |
+          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree = ET.parse('coverage.xml'); root = tree.getroot(); print(root.attrib['line-rate'])" 2>/dev/null || echo "0")
+          COVERAGE_PCT=$(python -c "print(f'{float($COVERAGE) * 100:.1f}')" 2>/dev/null || echo "0")
+          echo "coverage=$COVERAGE_PCT" >> $GITHUB_OUTPUT
+          echo "Python test coverage: $COVERAGE_PCT%"
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Run frontend tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload frontend coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: coverage/
+          retention-days: 30
+
+      - name: Extract coverage percentage
+        id: coverage
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            COVERAGE=$(node -e "const c = require('./coverage/coverage-summary.json'); console.log(c.total.lines.pct);")
+            echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+            echo "Frontend test coverage: $COVERAGE%"
+          else
+            echo "coverage=0" >> $GITHUB_OUTPUT
+          fi
+
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [python-tests, frontend-tests]
+    if: always()
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: test-reports
+
+      - name: Create test summary
+        id: summary
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Python Tests" >> $GITHUB_STEP_SUMMARY
+          if [ -f test-reports/python-coverage-xml/coverage.xml ]; then
+            COVERAGE=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('test-reports/python-coverage-xml/coverage.xml'); root = tree.getroot(); print(f\"{float(root.attrib['line-rate']) * 100:.1f}\")" 2>/dev/null || echo "N/A")
+            echo "- Coverage: $COVERAGE%" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Coverage: Report not available" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Frontend Tests" >> $GITHUB_STEP_SUMMARY
+          if [ -f test-reports/frontend-coverage/coverage-summary.json ]; then
+            COVERAGE=$(node -e "const c = require('./test-reports/frontend-coverage/coverage-summary.json'); console.log(c.total.lines.pct);" 2>/dev/null || echo "N/A")
+            echo "- Coverage: $COVERAGE%" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Coverage: Report not available" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Test Details" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow run: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🧪 Test Results\n\n';
+
+            // Python test results
+            try {
+              const xml = fs.readFileSync('test-reports/python-coverage-xml/coverage.xml', 'utf8');
+              const match = xml.match(/line-rate="([0-9.]+)"/);
+              if (match) {
+                const coverage = (parseFloat(match[1]) * 100).toFixed(1);
+                comment += `### Python Tests\n`;
+                comment += coverage >= 80 ? `✅ Coverage: ${coverage}%\n\n` : coverage >= 60 ? `⚠️ Coverage: ${coverage}%\n\n` : `❌ Coverage: ${coverage}%\n\n`;
+              }
+            } catch (e) {
+              comment += `### Python Tests\n❓ Results not available\n\n`;
+            }
+
+            // Frontend test results
+            try {
+              const coverageSummary = JSON.parse(fs.readFileSync('test-reports/frontend-coverage/coverage-summary.json', 'utf8'));
+              const coverage = coverageSummary.total.lines.pct;
+              comment += `### Frontend Tests\n`;
+              comment += coverage >= 80 ? `✅ Coverage: ${coverage}%\n\n` : coverage >= 60 ? `⚠️ Coverage: ${coverage}%\n\n` : `❌ Coverage: ${coverage}%\n\n`;
+            } catch (e) {
+              comment += `### Frontend Tests\n❓ Results not available\n\n`;
+            }
+
+            comment += `\n---\n`;
+            comment += `📊 [View detailed results](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
