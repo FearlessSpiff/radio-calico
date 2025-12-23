@@ -18,9 +18,37 @@ let currentTitle = null;
 let hlsLoaded = false;
 let hlsLoading = false;
 let playerInitialized = false;
+let loadingTimeout = null;
 
 // Set initial volume
 audio.volume = 0.7;
+
+// Debounced loading indicator functions
+function showLoading(message = 'Loading...') {
+    // Clear any existing timeout
+    if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+    }
+
+    // Set timeout to show loading only after 2 seconds
+    loadingTimeout = setTimeout(() => {
+        loading.textContent = message;
+        loading.classList.add('active');
+        loadingTimeout = null;
+    }, 2000);
+}
+
+function hideLoading() {
+    // Clear the timeout if loading hasn't been shown yet
+    if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+    }
+
+    // Hide loading indicator immediately
+    loading.textContent = '';
+    loading.classList.remove('active');
+}
 
 // Lazy load HLS.js library
 function loadHlsLibrary() {
@@ -224,13 +252,11 @@ async function initPlayer() {
         });
 
         hls.on(Hls.Events.FRAG_LOADING, function() {
-            loading.textContent = 'Loading...';
-            loading.classList.add('active');
+            showLoading('Loading...');
         });
 
             hls.on(Hls.Events.FRAG_LOADED, function() {
-                loading.textContent = '';
-                loading.classList.remove('active');
+                hideLoading();
                 error.style.display = 'none';
             });
 
@@ -304,13 +330,11 @@ audio.addEventListener('pause', function() {
 });
 
 audio.addEventListener('waiting', function() {
-    loading.textContent = 'Buffering...';
-    loading.classList.add('active');
+    showLoading('Buffering...');
 });
 
 audio.addEventListener('canplay', function() {
-    loading.textContent = '';
-    loading.classList.remove('active');
+    hideLoading();
 });
 
 // Rating functions
