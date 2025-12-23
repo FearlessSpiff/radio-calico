@@ -4,16 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Radio Calico - High Quality Live Stream</title>
+
+    <!-- Preload critical assets -->
+    <link rel="preload" href="/static/style.min.css" as="style">
+    <link rel="preload" href="/static/RadioCalicoLogoTM-50.webp" as="image" type="image/webp">
+
+    <!-- DNS prefetch and preconnect for external resources -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://d3d4yli4hf5bmh.cloudfront.net">
+
+    <!-- Non-blocking font loading -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"></noscript>
+
+    <!-- Critical CSS -->
+    <link rel="stylesheet" href="/static/style.min.css">
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-content">
-            <img src="/static/RadioCalicoLogoTM.png" alt="Radio Calico Logo" class="logo-img">
+            <picture>
+                <source type="image/webp"
+                        srcset="/static/RadioCalicoLogoTM-50.webp 1x, /static/RadioCalicoLogoTM-100.webp 2x">
+                <img src="/static/RadioCalicoLogoTM-50.png"
+                     srcset="/static/RadioCalicoLogoTM-50.png 1x, /static/RadioCalicoLogoTM-100.png 2x"
+                     alt="Radio Calico Logo"
+                     class="logo-img"
+                     width="50"
+                     height="50">
+            </picture>
             <div class="logo-text">
                 <span class="logo-radio">Radio</span> <span class="logo-calico">Calico</span>
             </div>
@@ -84,7 +105,6 @@
 
     <audio id="audio" preload="none"></audio>
 
-    <script src="/static/js/hls.min.js"></script>
-    <script src="/static/script.js"></script>
+    <script defer src="/static/script.min.js"></script>
 </body>
 </html>

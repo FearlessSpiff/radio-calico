@@ -17,6 +17,10 @@ __pycache__/
 # Node.js
 node_modules/
 
+# Build artifacts
+static/*.min.css
+static/*.min.js
+
 # Flask
 instance/
 .env
