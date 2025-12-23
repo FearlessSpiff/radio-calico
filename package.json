@@ -4,12 +4,19 @@
   "description": "Radio Calico - Live radio streaming application",
   "private": true,
   "scripts": {
-    "audit": "npm audit --audit-level=moderate"
+    "audit": "npm audit --audit-level=moderate",
+    "minify:css": "csso static/style.css -o static/style.min.css",
+    "minify:js": "terser static/script.js -o static/script.min.js -c -m",
+    "minify": "npm run minify:css && npm run minify:js",
+    "build": "npm run minify"
   },
   "dependencies": {
     "hls.js": "^1.5.15"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "csso-cli": "^4.0.2",
+    "terser": "^5.44.1"
+  },
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"

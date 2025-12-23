@@ -192,6 +192,46 @@ CREATE TABLE ratings (
   - Contains current track info: artist, title, album, date, bit_depth, sample_rate
   - Contains previous 5 tracks as prev_artist_N and prev_title_N fields
 
+### Performance Optimizations
+
+The application implements several page speed optimizations:
+
+**Lazy Loading:**
+- HLS.js (530 KB) loaded dynamically on first play button click
+- Reduces initial JavaScript bundle by 88%
+- Implementation: `loadHlsLibrary()` function in script.js
+
+**Image Optimization:**
+- Logo images in multiple formats and sizes
+- WebP with PNG fallback using `<picture>` element
+- Responsive images with `srcset` for retina displays
+- Files: RadioCalicoLogoTM-{50,100}.{png,webp}
+
+**Resource Loading:**
+- JavaScript uses `defer` attribute (non-blocking)
+- CSS and critical images preloaded
+- DNS prefetch for fonts.googleapis.com and CloudFront
+- Non-blocking font loading with media="print" trick
+
+**Caching Strategy (app.py:82-104):**
+- Static assets: `Cache-Control: max-age=31536000` (1 year)
+- API endpoints: `Cache-Control: no-cache, no-store`
+- HTML pages: `Cache-Control: max-age=300` (5 minutes)
+- Implemented via `@app.after_request` decorator
+
+**Docker Optimization:**
+- Source maps excluded from production builds
+- Development stage includes source maps for debugging
+- Separate build stages in Dockerfile
+
+**Minification:**
+- CSS minified with csso-cli (6 KB → 4.2 KB, 30% reduction)
+- JavaScript minified with terser (13 KB → 7.5 KB, 42% reduction)
+- Automated via `make build` or `npm run build`
+- Minified files generated during Docker build
+- Source files: style.css, script.js
+- Output files: style.min.css, script.min.js (gitignored)
+
 ## Key Implementation Details
 
 ### Song ID Generation
