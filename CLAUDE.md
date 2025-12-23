@@ -84,7 +84,7 @@ The application supports two deployment modes:
 
 **Production container features**:
 - Three-tier architecture: nginx → Gunicorn → PostgreSQL
-- **nginx**: Reverse proxy on port 80 with gzip compression and security headers
+- **nginx**: Reverse proxy on port 5001 (host) → port 80 (container) with gzip compression and security headers
   - Proxies all requests (including static files) to Gunicorn
   - Health check endpoint at `/health`
 - **radiocalico (app)**: Gunicorn WSGI server (4 workers, 2 threads) on port 5000

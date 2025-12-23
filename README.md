@@ -39,7 +39,7 @@ docker compose -f docker-compose.prod.yml logs -f
 docker compose -f docker-compose.prod.yml down
 ```
 
-The application will be available at `http://localhost` (port 80 via nginx)
+The application will be available at `http://localhost:5001` (port 5001 via nginx)
 
 **Development features**:
 - Hot reload on code changes
@@ -164,7 +164,7 @@ The application uses a multi-stage Dockerfile with two build targets:
 - **production**: Gunicorn + PostgreSQL + nginx with health checks and security hardening
 
 **Production architecture** (3-tier setup):
-- **nginx**: Reverse proxy on port 80 with gzip compression and security headers
+- **nginx**: Reverse proxy on port 5001 (host) → port 80 (container) with gzip compression and security headers
 - **radiocalico**: Flask application with Gunicorn (4 workers, 2 threads) on port 5000
 - **postgres**: PostgreSQL 16 Alpine database with persistent storage
 
