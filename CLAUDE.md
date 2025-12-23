@@ -76,6 +76,43 @@ make npm-audit          # npm dependency scan
 - Results posted as PR comments and job summaries
 - Reports available as workflow artifacts
 
+### Testing
+```bash
+# Run all tests (Python + Frontend)
+make test
+
+# Run individual test suites
+make test-python       # Python tests with pytest
+make test-frontend     # Frontend tests with Jest
+
+# Run with coverage reports
+make test-coverage
+
+# Run tests and security scans together
+make test-all
+
+# Run tests manually
+pytest tests/ -v                              # Python tests
+npm test                                       # Frontend tests
+npm run test:watch                             # Frontend tests in watch mode
+```
+
+**Test files:**
+- `tests/test_app.py`: Backend tests (Flask routes, ratings, database, caching)
+- `tests/test_frontend.test.js`: Frontend tests (HLS player, DOM, UI elements)
+- `pytest.ini`: Pytest configuration with coverage settings
+- `package.json`: Jest configuration and test scripts
+
+**Coverage reports:**
+- Python: `htmlcov/index.html` (HTML) and terminal output
+- Frontend: `coverage/lcov-report/index.html`
+
+**Automated testing:**
+- GitHub Actions workflow runs tests on push, PR, and manual trigger
+- Workflow: `.github/workflows/test.yml`
+- Coverage results posted as PR comments
+- Coverage reports available as workflow artifacts
+
 ### Docker commands
 ```bash
 # Rebuild containers

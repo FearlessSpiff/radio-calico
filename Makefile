@@ -1,4 +1,4 @@
-.PHONY: help install install-python install-npm build minify minify-css minify-js security security-python security-npm pip-audit safety bandit npm-audit copy-deps clean
+.PHONY: help install install-python install-npm build minify minify-css minify-js test test-python test-frontend test-coverage test-all security security-python security-npm pip-audit safety bandit npm-audit copy-deps clean
 
 # Default target
 help:
@@ -14,6 +14,13 @@ help:
 	@echo "  make minify          - Minify CSS and JavaScript files"
 	@echo "  make minify-css      - Minify only CSS files"
 	@echo "  make minify-js       - Minify only JavaScript files"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make test            - Run all tests (Python + Frontend)"
+	@echo "  make test-python     - Run Python tests with pytest"
+	@echo "  make test-frontend   - Run frontend JavaScript tests with Jest"
+	@echo "  make test-coverage   - Run all tests with coverage reports"
+	@echo "  make test-all        - Run tests and security scans"
 	@echo ""
 	@echo "Security Scanning:"
 	@echo "  make security        - Run all security scans (Python + npm)"
@@ -69,6 +76,44 @@ minify-js:
 	@echo "Minifying JavaScript..."
 	@npx terser static/script.js -o static/script.min.js -c -m
 	@echo "JavaScript minified: script.js → script.min.js"
+
+# Run all tests
+test: test-python test-frontend
+	@echo ""
+	@echo "========================================="
+	@echo "All tests completed!"
+	@echo "========================================="
+
+# Run Python tests with pytest
+test-python:
+	@echo "Running Python tests..."
+	@if [ -f venv/bin/pytest ]; then \
+		venv/bin/pytest tests/ -v; \
+	else \
+		pytest tests/ -v; \
+	fi
+
+# Run frontend JavaScript tests with Jest
+test-frontend:
+	@echo "Running frontend tests..."
+	@npm test
+
+# Run all tests with coverage reports
+test-coverage:
+	@echo "Running tests with coverage..."
+	@if [ -f venv/bin/pytest ]; then \
+		venv/bin/pytest tests/ -v --cov=app --cov-report=html --cov-report=term; \
+	else \
+		pytest tests/ -v --cov=app --cov-report=html --cov-report=term; \
+	fi
+	@npm run test:coverage
+
+# Run all tests and security scans
+test-all: test security
+	@echo ""
+	@echo "========================================="
+	@echo "All tests and security scans completed!"
+	@echo "========================================="
 
 # Run all security scans
 security: security-python security-npm
@@ -130,4 +175,9 @@ clean:
 	@rm -rf static/js
 	@rm -f bandit-report.json
 	@rm -f package-lock.json
+	@rm -rf htmlcov
+	@rm -rf coverage
+	@rm -f .coverage
+	@rm -f coverage.xml
+	@rm -rf .pytest_cache
 	@echo "Clean complete"

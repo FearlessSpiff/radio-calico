@@ -28,6 +28,13 @@ instance/
 # Security scan reports
 bandit-report.json
 
+# Test coverage
+htmlcov/
+coverage/
+.coverage
+coverage.xml
+.pytest_cache/
+
 # IDE
 .vscode/
 .idea/
