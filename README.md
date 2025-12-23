@@ -222,6 +222,32 @@ make install-python
 make install-npm
 ```
 
+### Automated Security Scanning (GitHub Actions)
+
+The project includes automated security scanning via GitHub Actions that runs:
+- **On every push** to master/main branch
+- **On every pull request** to master/main branch
+- **Daily at 2 AM UTC** (scheduled scan)
+- **Manually** via workflow dispatch
+
+**Features:**
+- Parallel execution of Python and npm security scans
+- Automatic PR comments with scan results
+- Artifact uploads for detailed reports (30-day retention)
+- Job summaries in GitHub Actions UI
+- Continue-on-error to prevent blocking CI on warnings
+
+**Workflow outputs:**
+- `pip-audit-report.json` - Python dependency vulnerabilities
+- `safety-report.json` - Alternative Python dependency scan
+- `bandit-report.json` - Python code security issues
+- `npm-audit-report.json` - npm dependency vulnerabilities
+
+**View results:**
+- Check the "Security Scan" workflow in the Actions tab
+- Review PR comments for security findings
+- Download detailed JSON reports from workflow artifacts
+
 ### Docker Configuration
 
 The application uses a multi-stage Dockerfile with two build targets:

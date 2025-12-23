@@ -70,6 +70,12 @@ make bandit             # Python code security scan
 make npm-audit          # npm dependency scan
 ```
 
+**Automated security scanning:**
+- GitHub Actions workflow runs security scans on push, PR, and daily
+- Workflow: `.github/workflows/security-scan.yml`
+- Results posted as PR comments and job summaries
+- Reports available as workflow artifacts
+
 ### Docker commands
 ```bash
 # Rebuild containers
