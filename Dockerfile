@@ -3,9 +3,12 @@ FROM python:3.11-slim as base
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including Node.js
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
+    curl \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -13,6 +16,15 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy package.json and install npm dependencies
+COPY package.json package-lock.json* ./
+RUN npm install --production
+
+# Create static/js directory and copy hls.js
+RUN mkdir -p static/js && \
+    cp node_modules/hls.js/dist/hls.min.js static/js/ && \
+    cp node_modules/hls.js/dist/hls.min.js.map static/js/ 2>/dev/null || true
 
 # Copy application code
 COPY app.py .

@@ -14,9 +14,16 @@ __pycache__/
 *.so
 .Python
 
+# Node.js
+node_modules/
+package-lock.json
+
 # Flask
 instance/
 .env
+
+# Security scan reports
+bandit-report.json
 
 # IDE
 .vscode/

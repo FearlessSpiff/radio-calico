@@ -1,0 +1,17 @@
+{
+  "name": "radiocalico",
+  "version": "1.0.0",
+  "description": "Radio Calico - Live radio streaming application",
+  "private": true,
+  "scripts": {
+    "audit": "npm audit --audit-level=moderate"
+  },
+  "dependencies": {
+    "hls.js": "^1.5.15"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

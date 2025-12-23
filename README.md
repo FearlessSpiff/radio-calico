@@ -81,6 +81,8 @@ http://localhost:5000
 ├── ratings.db                # SQLite database (development only)
 ├── .env                      # Environment variables
 ├── requirements.txt          # Python dependencies
+├── package.json              # npm dependencies (frontend)
+├── Makefile                  # Build and security scanning targets
 ├── Dockerfile                # Multi-stage Docker build (dev & prod)
 ├── docker-compose.yml        # Docker Compose for development
 ├── docker-compose.prod.yml   # Docker Compose for production (PostgreSQL + nginx)
@@ -90,9 +92,12 @@ http://localhost:5000
 ├── templates/                # HTML templates
 │   └── radio.html            # Main radio player interface (HTML only)
 ├── static/                   # Static assets
+│   ├── js/                   # JavaScript libraries
+│   │   └── hls.min.js        # HLS.js player library
 │   ├── style.css             # All CSS styles
 │   ├── script.js             # All JavaScript code
 │   └── RadioCalicoLogoTM.png # Logo
+├── node_modules/             # npm dependencies (gitignored)
 └── venv/                     # Virtual environment (local dev only)
 ```
 
@@ -155,6 +160,66 @@ venv/bin/pip freeze > requirements.txt
 To deactivate the virtual environment:
 ```bash
 deactivate
+```
+
+## Security Scanning
+
+The project includes comprehensive security scanning for both Python and JavaScript dependencies.
+
+### Running Security Scans
+
+Using Make (recommended):
+```bash
+# Run all security scans (Python + npm)
+make security
+
+# Run only Python security scans
+make security-python
+
+# Run only npm security scan
+make security-npm
+
+# Run individual scanners
+make pip-audit    # Scan Python dependencies
+make safety       # Scan Python dependencies (alternative)
+make bandit       # Scan Python code for security issues
+make npm-audit    # Scan npm dependencies
+```
+
+Using tools directly:
+```bash
+# Python dependency scanning
+pip-audit --desc
+safety check
+
+# Python code scanning
+bandit -r . --exclude ./venv,./node_modules
+
+# npm dependency scanning
+npm audit --audit-level=moderate
+```
+
+### Security Tools
+
+**Python:**
+- **pip-audit**: Scans Python dependencies for known vulnerabilities using the PyPA Advisory Database
+- **safety**: Checks Python dependencies against the Safety DB database
+- **bandit**: Analyzes Python code for common security issues
+
+**JavaScript:**
+- **npm audit**: Scans npm dependencies for known security vulnerabilities
+
+### Installing Dependencies with Security Tools
+
+```bash
+# Install all dependencies (Python + npm)
+make install
+
+# Install only Python dependencies
+make install-python
+
+# Install only npm dependencies
+make install-npm
 ```
 
 ### Docker Configuration

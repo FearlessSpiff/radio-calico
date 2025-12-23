@@ -40,14 +40,34 @@ The application runs on `http://localhost:5000` (or `http://0.0.0.0:5000`)
 
 ### Managing dependencies
 ```bash
-# Install new package
+# Install all dependencies (Python + npm)
+make install
+
+# Install new Python package
 venv/bin/pip install package-name
 
 # Update requirements.txt after installing packages
 venv/bin/pip freeze > requirements.txt
 
+# Install new npm package
+npm install package-name --save
+
 # If using Docker, rebuild after dependency changes
 docker compose build
+```
+
+### Security scanning
+```bash
+# Run all security scans (Python + npm)
+make security
+
+# Run individual scans
+make security-python    # All Python scans (pip-audit, safety, bandit)
+make security-npm       # npm audit
+make pip-audit          # Python dependency scan
+make safety             # Python dependency scan (alternative)
+make bandit             # Python code security scan
+make npm-audit          # npm dependency scan
 ```
 
 ### Docker commands
@@ -122,10 +142,12 @@ The application supports two deployment modes:
 - **templates/radio.html**: Clean HTML structure with semantic markup (91 lines)
 - **static/style.css**: All CSS styles including responsive design (387 lines)
 - **static/script.js**: All JavaScript code for player functionality and ratings (347 lines)
+- **static/js/hls.min.js**: HLS.js library (installed via npm, copied to static during build)
 - **static/RadioCalicoLogoTM.png**: Logo image
-- **HLS streaming**: Uses hls.js library loaded from CDN to handle the live stream
+- **HLS streaming**: Uses hls.js library (managed via npm) to handle the live stream
 - **Metadata refresh**: Polls `/api/metadata` every 10 seconds to update now-playing information
 - **Rating system**: Thumbs up/down buttons that submit ratings to the backend API
+- **Dependencies**: Frontend dependencies are managed via npm (package.json) and copied to static/js/ during build
 
 ### Database Schema
 
