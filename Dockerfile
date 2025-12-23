@@ -19,12 +19,19 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy package.json and install npm dependencies
 COPY package.json package-lock.json* ./
-RUN npm install --production
+RUN npm install
 
-# Create static/js directory and copy hls.js
+# Copy source files for minification
+COPY static/style.css static/style.css
+COPY static/script.js static/script.js
+
+# Minify CSS and JavaScript
+RUN npx csso static/style.css -o static/style.min.css && \
+    npx terser static/script.js -o static/script.min.js -c -m
+
+# Create static/js directory and copy hls.js (no source map for production)
 RUN mkdir -p static/js && \
-    cp node_modules/hls.js/dist/hls.min.js static/js/ && \
-    cp node_modules/hls.js/dist/hls.min.js.map static/js/ 2>/dev/null || true
+    cp node_modules/hls.js/dist/hls.min.js static/js/
 
 # Copy application code
 COPY app.py .
@@ -39,6 +46,9 @@ FROM base as development
 
 # Install development tools
 RUN pip install --no-cache-dir flask-debugtoolbar
+
+# Copy source map for debugging in development
+RUN cp node_modules/hls.js/dist/hls.min.js.map static/js/ 2>/dev/null || true
 
 # Set Flask environment for development
 ENV FLASK_APP=app.py

@@ -15,9 +15,54 @@ let metadataRefreshInterval = null;
 let currentSongId = null;
 let currentArtist = null;
 let currentTitle = null;
+let hlsLoaded = false;
+let hlsLoading = false;
+let playerInitialized = false;
 
 // Set initial volume
 audio.volume = 0.7;
+
+// Lazy load HLS.js library
+function loadHlsLibrary() {
+    return new Promise((resolve, reject) => {
+        if (hlsLoaded && window.Hls) {
+            resolve();
+            return;
+        }
+
+        if (hlsLoading) {
+            // Wait for ongoing load
+            const checkInterval = setInterval(() => {
+                if (hlsLoaded && window.Hls) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+            return;
+        }
+
+        hlsLoading = true;
+        status.textContent = 'Loading player...';
+
+        const script = document.createElement('script');
+        script.src = '/static/js/hls.min.js';
+        script.async = true;
+
+        script.onload = () => {
+            hlsLoaded = true;
+            hlsLoading = false;
+            console.log('HLS.js loaded successfully');
+            resolve();
+        };
+
+        script.onerror = () => {
+            hlsLoading = false;
+            reject(new Error('Failed to load HLS.js library'));
+        };
+
+        document.head.appendChild(script);
+    });
+}
 
 // Metadata fetching and display
 async function fetchMetadata() {
@@ -130,16 +175,24 @@ function updatePlaylistHistory(data) {
 }
 
 // Initialize HLS
-function initPlayer() {
-    if (Hls.isSupported()) {
-        hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: true,
-            backBufferLength: 90
-        });
+async function initPlayer() {
+    try {
+        // Load HLS.js library if not already loaded
+        await loadHlsLibrary();
 
-        hls.loadSource(streamUrl);
-        hls.attachMedia(audio);
+        if (!window.Hls) {
+            throw new Error('HLS.js failed to load');
+        }
+
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                backBufferLength: 90
+            });
+
+            hls.loadSource(streamUrl);
+            hls.attachMedia(audio);
 
         hls.on(Hls.Events.MANIFEST_PARSED, function() {
             console.log('HLS manifest loaded, ready to play');
@@ -175,24 +228,43 @@ function initPlayer() {
             loading.classList.add('active');
         });
 
-        hls.on(Hls.Events.FRAG_LOADED, function() {
-            loading.textContent = '';
-            loading.classList.remove('active');
-            error.style.display = 'none';
-        });
+            hls.on(Hls.Events.FRAG_LOADED, function() {
+                loading.textContent = '';
+                loading.classList.remove('active');
+                error.style.display = 'none';
+            });
 
-    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-        audio.src = streamUrl;
-        playButton.disabled = false;
-    } else {
-        error.textContent = 'Your browser does not support HLS streaming.';
+        } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+            audio.src = streamUrl;
+            playButton.disabled = false;
+            status.textContent = 'Ready to Play';
+        } else {
+            error.textContent = 'Your browser does not support HLS streaming.';
+            error.style.display = 'block';
+            playButton.disabled = true;
+        }
+    } catch (err) {
+        console.error('Error initializing player:', err);
+        error.textContent = 'Failed to initialize player. Please refresh the page.';
         error.style.display = 'block';
         playButton.disabled = true;
     }
 }
 
 // Play/Pause functionality
-playButton.addEventListener('click', function() {
+playButton.addEventListener('click', async function() {
+    // Initialize player on first play if not already initialized
+    if (!playerInitialized && !hls) {
+        playerInitialized = true;
+        try {
+            await initPlayer();
+        } catch (err) {
+            console.error('Failed to initialize player:', err);
+            playerInitialized = false;
+            return;
+        }
+    }
+
     if (!isPlaying) {
         audio.play().then(() => {
             isPlaying = true;
@@ -342,5 +414,5 @@ window.addEventListener('beforeunload', function() {
 });
 
 // Initialize
-initPlayer();
+// HLS.js is now lazy-loaded on first play button click
 startMetadataRefresh();

@@ -1,4 +1,4 @@
-.PHONY: help install install-python install-npm security security-python security-npm pip-audit safety bandit npm-audit copy-deps clean
+.PHONY: help install install-python install-npm build minify minify-css minify-js security security-python security-npm pip-audit safety bandit npm-audit copy-deps clean
 
 # Default target
 help:
@@ -8,6 +8,12 @@ help:
 	@echo "  make install         - Install all dependencies (Python + npm)"
 	@echo "  make install-python  - Install Python dependencies"
 	@echo "  make install-npm     - Install npm dependencies and copy to static"
+	@echo ""
+	@echo "Build:"
+	@echo "  make build           - Build and minify all assets (CSS + JS)"
+	@echo "  make minify          - Minify CSS and JavaScript files"
+	@echo "  make minify-css      - Minify only CSS files"
+	@echo "  make minify-js       - Minify only JavaScript files"
 	@echo ""
 	@echo "Security Scanning:"
 	@echo "  make security        - Run all security scans (Python + npm)"
@@ -43,6 +49,26 @@ copy-deps:
 	@cp node_modules/hls.js/dist/hls.min.js static/js/
 	@cp node_modules/hls.js/dist/hls.min.js.map static/js/ 2>/dev/null || true
 	@echo "Dependencies copied successfully"
+
+# Build and minify all assets
+build: minify
+	@echo "Build complete!"
+
+# Minify CSS and JavaScript
+minify: minify-css minify-js
+	@echo "Minification complete!"
+
+# Minify CSS files
+minify-css:
+	@echo "Minifying CSS..."
+	@npx csso static/style.css -o static/style.min.css
+	@echo "CSS minified: style.css → style.min.css"
+
+# Minify JavaScript files
+minify-js:
+	@echo "Minifying JavaScript..."
+	@npx terser static/script.js -o static/script.min.js -c -m
+	@echo "JavaScript minified: script.js → script.min.js"
 
 # Run all security scans
 security: security-python security-npm

@@ -7,6 +7,9 @@ import os
 
 app = Flask(__name__)
 
+# Build version for cache busting
+BUILD_VERSION = os.environ.get('BUILD_VERSION', datetime.now().strftime('%Y%m%d%H%M%S'))
+
 # Database configuration
 DATABASE_URL = os.environ.get('DATABASE_URL', 'sqlite:///ratings.db')
 USE_POSTGRES = DATABASE_URL.startswith('postgresql://') or DATABASE_URL.startswith('postgres://')
@@ -78,6 +81,35 @@ def get_user_fingerprint():
     user_agent = request.headers.get('User-Agent', '')
     fingerprint = hashlib.sha256(f"{ip}:{user_agent}".encode()).hexdigest()
     return fingerprint
+
+@app.context_processor
+def inject_build_version():
+    """Inject build version into templates for cache busting"""
+    return {'build_version': BUILD_VERSION}
+
+@app.after_request
+def add_cache_headers(response):
+    """Add appropriate Cache-Control headers for performance optimization"""
+    path = request.path
+
+    # Static assets - long cache (1 year)
+    if path.startswith('/static/'):
+        if path.endswith(('.css', '.js', '.png', '.jpg', '.jpeg', '.webp', '.svg', '.woff', '.woff2', '.ttf', '.map')):
+            response.cache_control.max_age = 31536000  # 1 year
+            response.cache_control.public = True
+
+    # API endpoints - no cache
+    elif path.startswith('/api/'):
+        response.cache_control.no_cache = True
+        response.cache_control.no_store = True
+        response.cache_control.must_revalidate = True
+
+    # HTML pages - short cache
+    elif path == '/' or path.endswith('.html'):
+        response.cache_control.max_age = 300  # 5 minutes
+        response.cache_control.public = True
+
+    return response
 
 @app.route('/')
 def index():
