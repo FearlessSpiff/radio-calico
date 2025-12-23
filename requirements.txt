@@ -15,10 +15,13 @@ Werkzeug==3.1.4
 
 # Security scanning tools
 pip-audit==2.7.3
-safety==3.2.11
+safety==3.7.0
 bandit==1.8.0
 
 # Testing tools
 pytest==8.3.4
 pytest-cov==6.0.0
 pytest-mock==3.14.0
+
+# Security fix for transitive dependency
+filelock>=3.20.1
